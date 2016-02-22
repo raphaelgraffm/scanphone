@@ -6,3 +6,8 @@
 Bonjour, je suis un changement *très révolutionnaire*, et je ne compte pas m'arrêter là.
 
 Oh mon dieu, un nouveau changement _revolutionnaire_ et éblouissant.
+
+**Vous foutez quoi ?**
+
+Mon dieu un nouveau changement.
+C'est la changitude.
