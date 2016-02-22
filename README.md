@@ -11,3 +11,8 @@ Oh mon dieu, un nouveau changement _revolutionnaire_ et éblouissant.
 
 Mon dieu un nouveau changement.
 C'est la changitude.
+
+** Vous êtes que des grosses merdes**
+
+# Et je suis un pusher de compétition.
+## Vous badez
