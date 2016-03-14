@@ -6,9 +6,16 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${d}/CMake")
 find_package(Imagine)
 
-project(Gradient)
-add_executable(Gradient
+project(Flou)
+add_executable(Flou
         main.cpp
-        codebarre/codebarre.cpp 
-        gradient/gradient.cpp)
-ImagineUseModules(Gradient Graphics)
+        codebarre/codebarre.cpp
+        codebarre/codebarre.h
+        gradient/gradient.cpp
+        gradient/gradient.h)
+ImagineUseModules(Flou Graphics)
+
+add_executable(Generateur
+        generateur.cpp
+        codebarre/codebarre.cpp)
+ImagineUseModules(Generateur Graphics)

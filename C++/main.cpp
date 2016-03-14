@@ -8,45 +8,52 @@ using namespace Imagine;
 const int zoom = 4;
 const int l=(largeurImage+1)*zoom;
 
-
-//void affiche(CodeBarre u) {
-  //  for (int i=0;i<largeurImage;i++) {
-      //  fillRect(i*zoom,0,zoom);
-    //}
-//}
-
 int main() {
+    // rayon de floutage
+    double R = 6;
+
+    // chargement image
     int w, h;
     byte* t;
     loadGreyImage(srcPath("imagesCodeBarre/cb1.jpg"), t, w, h);
-    openWindow(w,h);
+    cout<<w<<endl;
+    openWindow(w,4*h);
     putGreyImage(0,0,t,w,h);
     click();
-    clearWindow();
-    int p = int(h/2);
-    cout<<w<<endl;
+
+    // extraction ligne à analyser
     int tab[largeurImage];
     for(int i=0;i<largeurImage;i++){
-        tab[i]=t[p*w+i];
+        tab[i]=t[int(h/2)*w+i];
     }
+
+    // définition objets code-barre
     CodeBarre u0(tab);
-    CodeBarre u = u0.flou(20);
+    CodeBarre u=u0.flou(R);
+    affiche(u,h,h);
+    click();
+
+    // descente de gradient
+    gradient(u,0.2,1,R,u,0);
+    u.seuil(128);
+    affiche(u,2*h,h);
+    click();
+
+    // trouver le rayon
+    /*CodeBarre ur = u0.flou(R);
+    gradientR(ur,0.01,1,2,10,ur,0);
+    ur.normaliser();
     for(int k=0; k<h;k++){
         for(int j=0;j<w;j++){
-            t[k*w+j]=byte(u(j));
+            t[k*w+j]=byte(ur(j));
         }
     }
-    putGreyImage(0,0,t,w,h);
-    click();
-    clearWindow();
-    gradient(u,10,0.5,20,u,0.5);
-    for(int k=0; k<h;k++){
-        for(int j=0;j<w;j++){
-            t[k*w+j]=byte(u(j));
-        }
-    }
-    putGreyImage(0,0,t,w,h);
-    click();
-    endGraphics();
+    Clean(t,w,h,150);
+    putGreyImage(0,3*h,t,w,h);
+    endGraphics();*/
+
     return 0;
 }
+
+
+

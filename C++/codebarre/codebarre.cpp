@@ -1,5 +1,12 @@
 #include "codebarre.h"
 #include <iostream>
+using namespace std;
+#include <Imagine/Graphics.h>
+#include <Imagine/Images.h>
+using namespace Imagine;
+
+
+// ----- constructeurs + accesseur
 
 CodeBarre::CodeBarre() {
     // constructeur vide
@@ -8,7 +15,8 @@ CodeBarre::CodeBarre() {
         data[i]=0;
     }
 }
-int& CodeBarre::operator()(int i) {
+
+double& CodeBarre::operator()(int i) {
     // permet de gèrer les conditions au bord
     // pour les fonctions qui en ont besoin
     if (i<0) {
@@ -29,10 +37,21 @@ CodeBarre::CodeBarre(int valInitiale) {
     }
 }
 
-/**
- * Cree un code barre à partir d'un fichier image
- * On suppose que l'image a une largeur de largeurImage
- */
+CodeBarre::CodeBarre(int d[largeurImage]) {
+    n=largeurImage;
+    for(int i=0;i<n;i++) {
+        data[i]=d[i];
+    }
+}
+
+CodeBarre::CodeBarre(const CodeBarre& u) {
+    n=largeurImage;
+    for(int i=0;i<n;i++) {
+        data[i]=u.data[i];
+    }
+}
+
+// constructeur à partir d'un chemin, faire srcPath dans l'appel
 CodeBarre::CodeBarre(const char* chemin) : n(largeurImage)
 {
     // importe l'image
@@ -50,50 +69,7 @@ CodeBarre::CodeBarre(const char* chemin) : n(largeurImage)
     }
 }
 
-CodeBarre::CodeBarre(int d[largeurImage]) {
-    n=largeurImage;
-    for(int i=0;i<n;i++) {
-        data[i]=d[i];
-    }
-}
-
-// ----- opérateurs
-
-CodeBarre CodeBarre::operator+(const CodeBarre& v) const {
-    CodeBarre w(v);
-    for (int i=0;i<n;i++) {
-        w(i) = w(i) + data[i];
-    }
-    return w;
-}
-
-CodeBarre CodeBarre::operator*(int scalaire) const {
-    CodeBarre w;
-    for (int i=0;i<n;i++) {
-        w(i) = data[i]*scalaire;
-    }
-    return w;
-}
-
-CodeBarre CodeBarre::operator-(const CodeBarre& v) const {
-    CodeBarre w(v);
-    return w+v*(-1);
-}
-
-CodeBarre CodeBarre::operator*(const CodeBarre& v) const {
-    CodeBarre w(v);
-    for (int i=0;i<n;i++) {
-        w(i) = w(i)*data[i];
-    }
-    return w;
-}
-
-CodeBarre::CodeBarre(const CodeBarre& u) {
-    n=largeurImage;
-    for(int i=0;i<n;i++) {
-        data[i]=u.data[i];
-    }
-}
+// ----- methodes vectorielles
 
 CodeBarre CodeBarre::grad() {
     CodeBarre v;
@@ -115,17 +91,17 @@ CodeBarre CodeBarre::div() {
     return v;
 }
 
-int CodeBarre::normeL1() const {
-    int s=0;
+double CodeBarre::normeL1() const {
+    double s=0;
     for (int i=0;i<n;i++) {
-        s+=data[i];
+        s+=abs(data[i]);
     }
     return s;
 }
 
-int CodeBarre::normeL2() const {
+double CodeBarre::normeL2() const{
     // mathématiquement, c'est une norme L2 au carré
-    int s=0;
+    double s=0;
     for (int i=0;i<n;i++) {
         s+=data[i]*data[i];
     }
@@ -133,22 +109,98 @@ int CodeBarre::normeL2() const {
 }
 
 
-CodeBarre CodeBarre::flou(int rayonKer) {
-    CodeBarre w;
+// ----- opérateurs
 
-    int fact=2*rayonKer + 1;
+CodeBarre CodeBarre::operator+(const CodeBarre& v) const {
+    CodeBarre w(v);
+    for (int i=0;i<n;i++) {
+        w(i) = w(i) + data[i];
+    }
+    return w;
+}
+
+CodeBarre CodeBarre::operator*(double scalaire) const {
+    CodeBarre w;
+    for (int i=0;i<n;i++) {
+        w(i) = (data[i]*scalaire);
+    }
+    return w;
+}
+
+CodeBarre CodeBarre::operator-(CodeBarre v) {
+    CodeBarre w(v);
+    for (int i=0;i<n;i++) {
+        w(i) = data[i]-w(i);
+    }
+    return w;
+}
+
+CodeBarre CodeBarre::operator*(const CodeBarre& v) const {
+    CodeBarre w(v);
+    for (int i=0;i<n;i++) {
+        w(i) = w(i)*data[i];
+    }
+    return w;
+}
+
+
+// ----- algorithme
+
+void CodeBarre::normaliser() {
+    for (int i=0;i<n;i++) {
+        (*this)(i) = (min(max(0,int((*this)(i))),255));
+
+    }
+}
+
+CodeBarre CodeBarre::flou(double rayonKer) {
+    CodeBarre w;
+    int r = int(rayonKer);
+    double a = rayonKer-r;
+    double fact=2*rayonKer + 1;
 
     // s initial
-    int s=0;
-    for(int k=-rayonKer;k<=rayonKer;k++) {
+    double s=0;
+    for(int k=-r;k<=r;k++) {
         s+=(*this)(k);
     }
-    w(0) = s/fact;
+    s+=a*((*this)(-r-1)+(*this)(r+1));
+    w(0) = (s/fact);
 
     for (int i=1; i<n; i++) {
-       s = s + (*this)(i+rayonKer) - (*this)(i-1-rayonKer);
-       w(i) = s/fact;
+       s = s + a*(*this)(i+r+1) + (1-a)*(*this)(i+r) + - a*(*this)(i-r-2) - (1-a)*(*this)(i-1-r);
+       w(i) = (s/fact);
     }
 
     return w;
 }
+
+void CodeBarre::etendre(){
+    double M=0;
+    double m=255;
+    for(int i=0;i<n;i++){
+        M = max(M,(*this)(i));
+        m = min(m,(*this)(i));
+    }
+    for(int j=0;j<n;j++){
+        (*this)(j) = (((*this)(j)-m)/(M-m))*255;
+    }
+}
+
+void CodeBarre::seuil(double seuil){
+    for(int i=0;i<n;i++){
+        if(data[i]<seuil)
+            data[i] = 0;
+        else
+            data[i] = 255;
+    }
+}
+
+
+void affiche(CodeBarre u, int y, int h) {
+    for (int i=0;i<largeurImage;i++) {
+        Color col(u(i));
+        fillRect(i,y,1,h,col);
+    }
+}
+

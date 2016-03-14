@@ -1,51 +1,52 @@
 #ifndef CODEBARRE_H
 #define CODEBARRE_H
-
-#include <Imagine/Images.h>
+#include<Imagine/Graphics.h>
 using namespace Imagine;
+#include <iostream>
+using namespace std;
 
 // Largeur de l'image analysée en pixels
-const int largeurImage = 500;
+const int largeurImage=391;
 
-class CodeBarre 
-{
+// Classe CodeBarre unidimensionnelle
+
+class CodeBarre {
     // tableau de pixels entre 0 et 255
-    int data[largeurImage];
-
+    double data[largeurImage];
     // largeur du tableau
     int n;
-
 public:
-
     CodeBarre();
 
-    // accesseur rapide
-    int& operator() (int i);
+    // accesseur
+    double& operator()(int i);
 
     // constructeurs
     CodeBarre(int valInitiale);
-    CodeBarre(const CodeBarre& u);
-
-    /**
-     * Cree un code barre à partir d'un fichier image
-     */
-    CodeBarre(const char* chemin);
     CodeBarre(int d[largeurImage]);
+    CodeBarre(const CodeBarre& u);
+    CodeBarre(const char* chemin);
 
     // methodes vectorielles
     CodeBarre grad();
     CodeBarre div();
-    int normeL1() const;
-    int normeL2() const;
-
-    // algorithme
-    CodeBarre flou(int rayonKer);
+    double normeL1() const;
+    double normeL2() const; // norme L2 au carré
 
     // opérateurs
     CodeBarre operator+(const CodeBarre& v) const;
-    CodeBarre operator*(int scalaire) const;
-    CodeBarre operator-(const CodeBarre& v) const;
-    CodeBarre operator*(const CodeBarre& v) const; // pour illumination
+    CodeBarre operator*(double scalaire) const;
+    CodeBarre operator-(CodeBarre v);
+    CodeBarre operator*(const CodeBarre& v) const; // multiplication terme à terme
+
+    // algorithme
+    void normaliser();
+    CodeBarre flou(double rayonKer);
+    void etendre(); // homothétie couleur image pour coller 0,255
+    void seuil(double seuil);
 };
+
+void affiche(CodeBarre u, int y, int h);
+
 
 #endif // CODEBARRE_H
