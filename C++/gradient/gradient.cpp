@@ -3,10 +3,10 @@
 using namespace std;
 
 
+
 double J(CodeBarre u,CodeBarre u0,double r, double lambda){
     CodeBarre u1 = u.flou(r);
     CodeBarre u2=u1-u0;
-    // pour éviter dépassement du double, *0.0001
     return 0.0001*(0.5*(u2.normeL2())+lambda*((u.grad()).normeL1()));
 }
 
@@ -16,15 +16,19 @@ double J(CodeBarre u, CodeBarre u0, double r, double lambda, CodeBarre I, double
 
 
 void gradient(CodeBarre u0, double epsilon, double alpha, double r, CodeBarre& u, double lambda){
-    int iteration=0;
-    while(J(u,u0,r,lambda)>epsilon && iteration<200){
-        cout<<J(u,u0,r,lambda)<<endl;
-        CodeBarre du;
-        du = u.grad();
-        double a = 1/(sqrt(du.normeL2())+1);
-        u = u - ( ((u.flou(r)-u0).flou(r)-du.div()*a*lambda)*alpha );
-        u.normaliser();
-        iteration++;
+    //cout<<J(u,u0,r,lambda)<<endl;
+    while(J(u,u0,r,lambda)>epsilon){
+        //cout<<J(u,u0,r,lambda)<<endl;
+        CodeBarre u1;
+        u1 = (u.flou(r)-u0);
+        CodeBarre u2;
+        u2 = u.grad();
+        double a = 1/(sqrt(u2.normeL2())+1);
+        u2 = u2*a;
+        u2 = (u2.div())*lambda;
+        CodeBarre u3;
+        u3 = u1.flou(r)-u2;
+        u=u-(u3*alpha);
     }
 }
 

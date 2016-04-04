@@ -4,6 +4,7 @@ using namespace std;
 #include <Imagine/Graphics.h>
 #include <Imagine/Images.h>
 using namespace Imagine;
+#include <math.h>
 
 
 // ----- constructeurs + accesseur
@@ -157,50 +158,38 @@ CodeBarre CodeBarre::flou(double rayonKer) {
     CodeBarre w;
     int r = int(rayonKer);
     double a = rayonKer-r;
-    double fact=2*rayonKer + 1;
-
-    // s initial
-    double s=0;
+    double fact=0;
+    double* Ker = new double[2*r+3];
     for(int k=-r;k<=r;k++) {
-        s+=(*this)(k);
+        Ker[r+1+k]=(sqrt(pow(rayonKer+0.5,2)-pow(k+0.5,2))+sqrt(pow(rayonKer+0.5,2)-pow(k-0.5,2)));
+        fact += Ker[r+1+k];
+        cout<<Ker[r+1+k]<<endl;
     }
-    s+=a*((*this)(-r-1)+(*this)(r+1));
-    w(0) = (s/fact);
+    Ker[0]=a*sqrt(a*(rayonKer+0.5+r));
+    Ker[2*r+2]=a*sqrt(a*(rayonKer+0.5+r));
+    fact += 2*a*sqrt(a*(rayonKer+0.5+r));
 
-    for (int i=1; i<n; i++) {
-       s = s + a*(*this)(i+r+1) + (1-a)*(*this)(i+r) + - a*(*this)(i-r-2) - (1-a)*(*this)(i-1-r);
-       w(i) = (s/fact);
+    for (int i=0; i<n; i++) {
+        w(i)=0;
+        for(int j=-r-1;j<r+2;j++){
+            w(i)+= Ker[r+1+j]*((*this)(i+j));
+        }
+        w(i)=w(i)/fact;
     }
-
+    delete[] Ker;
     return w;
 }
 
 void CodeBarre::etendre(){
     double M=0;
     double m=255;
-    for(int i=0;i<n;i++){
+    for(int i=0;i<largeurImage;i++){
         M = max(M,(*this)(i));
         m = min(m,(*this)(i));
     }
-    for(int j=0;j<n;j++){
+    for(int j=0;j<largeurImage;j++){
         (*this)(j) = (((*this)(j)-m)/(M-m))*255;
     }
-}
-
-void CodeBarre::seuil(double seuil){
-    for(int i=0;i<n;i++){
-        if(data[i]<seuil)
-            data[i] = 0;
-        else
-            data[i] = 255;
-    }
-}
-
-
-void affiche(CodeBarre u, int y, int h) {
-    for (int i=0;i<largeurImage;i++) {
-        Color col(u(i));
-        fillRect(i,y,1,h,col);
-    }
+    cout<<m<<";"<<" "<<M<<endl;
 }
 

@@ -42,11 +42,7 @@ public:
     // algorithme
     void normaliser();
     CodeBarre flou(double rayonKer);
-    void etendre(); // homothétie couleur image pour coller 0,255
-    void seuil(double seuil);
+    void etendre();
 };
-
-void affiche(CodeBarre u, int y, int h);
-
 
 #endif // CODEBARRE_H
