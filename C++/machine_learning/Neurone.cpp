@@ -31,6 +31,10 @@ Perceptron::Perceptron(int n0){
     theta = 0;
 }
 
+Perceptron::~Perceptron() {
+    delete[] w;
+}
+
 //Initialiser w a partir d'un tableau
 void Perceptron::set(double ww[], double ttheta){
     for (int i=0; i<n; i++)
@@ -72,9 +76,9 @@ double Perceptron::Adaline(double I[]){
 //ECHANTILLON
 
 Echantillon::Echantillon(int p0, int n0, int k0){
-    p = p0;
-    n = n0;
-    k = k0;
+    p = p0; // nombre d'exemples
+    n = n0; // entrées
+    k = k0; // sorties
 
     el = new double*[p0];
     for (int i=0; i<p0; i++)
@@ -83,6 +87,16 @@ Echantillon::Echantillon(int p0, int n0, int k0){
     v = new double*[p0];
     for (int i=0; i<p0; i++)
         v[i] = new double[k0];
+}
+
+
+Echantillon::~Echantillon(){
+    for (int i=0; i<p; i++) {
+        delete[] el[i];
+        delete[] v[i];
+    }
+    delete[] el;
+    delete[] v;
 }
 
 int Echantillon::size() const{
@@ -117,40 +131,41 @@ double Echantillon::T(int i, int j){
 }
 
 
-Echantillon::~Echantillon(){
-    delete[] el;
-    delete[] v;
-}
-
-
 double Echantillon::O(int i, Perceptron P){
     return P.Adaline(el[i]);
 }
 
 //RESEAU
 
-Reseau::Reseau(int q0, int nL0){
-    q = q0;
-    nLmax = nL0;
+Reseau::Reseau(int q0, int nL[]){
+    // en supposant nL de taille au moins q+1 (en comptant l'entrée)
+    q = q0; // nombre de couches
+
+    nLmax = new int[q+1];
+    for(int i=0;i<=q;i++) {
+        nLmax[i] = nL[i];
+    }
+
     p = new Perceptron*[q];
-    z = new double*[q+1];
+    z = new double*[q+1]; // +1 en comptant l'entrée
     derE = new double*[q];
+
     for (int L=0; L<q; L++){
-        p[L] = new Perceptron[nL0];
-        for (int i=0; i<nL0; i++){
-            p[L][i].n = nL0;
-            p[L][i].w = new double[nL0];
+        p[L] = new Perceptron[nLmax[L+1]]; // attention au décalage de n
+        for (int i=0; i<nLmax[L+1]; i++){
+            p[L][i].n = nLmax[L];
+            p[L][i].w = new double[nLmax[L]];
             p[L][i].theta = 0.;
         }
-        z[L] = new double[nL0];
-        derE[L] = new double[nL0];
+        z[L] = new double[nLmax[L]];
+        derE[L] = new double[nLmax[L+1]]; // +1 à vérifier, cf algo
     }
-    z[q] = new double[nL0];
+    z[q] = new double[nLmax[q]];
 
     // aléatoire
     for (int L=0; L<q; L++)
-        for (int i=0; i<nLmax; i++) {
-            for (int j=0; j<nLmax; j++){
+        for (int i=0; i<nLmax[L+1]; i++) {
+            for (int j=0; j<nLmax[L]; j++){
                 p[L][i].w[j] = 0;
                 p[L][i].w[j] = double(rand()%1000000)/1000000;
             }
@@ -159,17 +174,24 @@ Reseau::Reseau(int q0, int nL0){
 }
 
 Reseau::~Reseau(){
-    //delete[] p;
-    //delete[] z;
-    //delete[] derE;
+    delete[] nLmax;
+
+    for(int L=0;L<q;L++) {
+        delete[] p[L];
+        delete[] z[L];
+        delete[] derE[L];
+    }
+    delete[] z[q];
+    delete[] p;
+    delete[] z;
+    delete[] derE;
 }
 
 void Reseau::calculeZ(double I[]){
-    //cout << "Toast ?" << endl;
-    for (int i=0; i<nLmax; i++)
+    for (int i=0; i<nLmax[0]; i++)
         z[0][i] = I[i];
     for (int L=1; L<=q; L++)
-        for (int i=0; i<nLmax; i++){
+        for (int i=0; i<nLmax[L]; i++){
             z[L][i] = sigmaR(p[L-1][i].Adaline(z[L-1]));
             //cout << "z[" << L <<"][" << i << "] = "  << z[L][i] << endl;
         }
@@ -185,13 +207,13 @@ double* Reseau::retourSortie(){
 void Reseau::majP(double T[], double eps){
     //Calcul des dE/dyj
 
-    for (int j=0; j<nLmax; j++)
+    for (int j=0; j<nLmax[q]; j++)
         derE[q-1][j] = z[q][j]*(1-z[q][j])*(z[q][j]-T[j]);
 
     for (int L=q-2; L>=0; L--)
-        for (int j=0; j<nLmax; j++){
+        for (int j=0; j<nLmax[L+1]; j++){
             derE[L][j] = 0.;
-            for (int k=0; k<nLmax; k++)
+            for (int k=0; k<nLmax[L+2]; k++)
                 derE[L][j] += p[L+1][k].w[j]*derE[L+1][k];
             derE[L][j] *= z[L+1][j]*(1-z[L+1][j]);
             //cout << double(derE[L][j]) << endl;
@@ -199,9 +221,9 @@ void Reseau::majP(double T[], double eps){
 
     //Mise à jour des perceptrons
     for (int L=q-1; L>=0; L--)
-        for (int i=0; i<nLmax; i++) {
-            for (int j=0; j<nLmax; j++) {
-                p[L][i].w[j] -= eps*z[L][i]*derE[L][j];
+        for (int i=0; i<nLmax[L+1]; i++) {
+            for (int j=0; j<nLmax[L]; j++) {
+                p[L][i].w[j] -= eps*derE[L][i]*z[L][j];
             }
             p[L][i].theta -= eps*derE[L][i]*(-1);
         }
@@ -213,7 +235,7 @@ void Reseau::majP(double T[], double eps){
 void Reseau::apprend(Echantillon E, double eps){
     for (int i=0; i<E.size(); i++){
         calculeZ(E.getEl(i));
-        //cout << E.getEl(i)[0] << endl;
+        //cout << "E.getEl = " << (E.getEl(i))[0] << " , " << (E.getEl(i))[1] << " -> " << (E.tabT(i))[0] << " | Résultat réseau : " << z[q][0] << endl;
         majP(E.tabT(i),eps);
     }
 }
@@ -221,8 +243,8 @@ void Reseau::apprend(Echantillon E, double eps){
 void Reseau::affiche() {
     for (int L=0; L<q; L++) {
         cout << "--- Couche " << L << endl;
-        for (int i=0; i<nLmax; i++) {
-            for (int j=0; j<nLmax; j++) {
+        for (int i=0; i<nLmax[L+1]; i++) {
+            for (int j=0; j<nLmax[L]; j++) {
                 cout << p[L][i].w[j] << " | ";
             }
             cout << "th : " << p[L][i].theta << endl;
