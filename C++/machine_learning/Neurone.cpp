@@ -25,13 +25,14 @@ Perceptron::Perceptron(int n0){
     n = n0;
     w = new double[n0];
     //Initialisation au hasard de w
-    for (int i=0; i<n0; i++)
-        w[i] = double((rand()%10)/10);
-    theta = 0.;
+    for (int i=0; i<n0; i++) {
+        w[i] = 0;
+    }
+    theta = 0;
 }
 
 //Initialiser w a partir d'un tableau
-Perceptron::set(double ww[], double ttheta){
+void Perceptron::set(double ww[], double ttheta){
     for (int i=0; i<n; i++)
         w[i] = ww[i];
     theta = ttheta;
@@ -41,7 +42,7 @@ int Perceptron::size() const{
     return n;
 }
 
-double Perceptron::seuil(){
+double Perceptron::seuil() {
     return theta;
 }
 
@@ -145,17 +146,22 @@ Reseau::Reseau(int q0, int nL0){
         derE[L] = new double[nL0];
     }
     z[q] = new double[nL0];
+
+    // aléatoire
     for (int L=0; L<q; L++)
-        for (int i=0; i<nLmax; i++)
+        for (int i=0; i<nLmax; i++) {
             for (int j=0; j<nLmax; j++){
-                p[L][i].w[j] = double((rand()%10)/10);
+                p[L][i].w[j] = 0;
+                p[L][i].w[j] = double(rand()%1000000)/1000000;
             }
+            p[L][i].theta = double(rand()%1000000)/1000000;
+        }
 }
 
 Reseau::~Reseau(){
-    delete[] p;
-    delete[] z;
-    delete[] derE;
+    //delete[] p;
+    //delete[] z;
+    //delete[] derE;
 }
 
 void Reseau::calculeZ(double I[]){
@@ -186,19 +192,22 @@ void Reseau::majP(double T[], double eps){
         for (int j=0; j<nLmax; j++){
             derE[L][j] = 0.;
             for (int k=0; k<nLmax; k++)
-                derE[L][j] += p[L+1][k].w[j]*derE[L+1][j];
+                derE[L][j] += p[L+1][k].w[j]*derE[L+1][k];
             derE[L][j] *= z[L+1][j]*(1-z[L+1][j]);
             //cout << double(derE[L][j]) << endl;
     }
 
     //Mise à jour des perceptrons
     for (int L=q-1; L>=0; L--)
-        for (int i=0; i<nLmax; i++)
-            for (int j=0; j<nLmax; j++)
+        for (int i=0; i<nLmax; i++) {
+            for (int j=0; j<nLmax; j++) {
                 p[L][i].w[j] -= eps*z[L][i]*derE[L][j];
+            }
+            p[L][i].theta -= eps*derE[L][i]*(-1);
+        }
 
     //cout << z[q][0] << endl;
-    cout << derE[0][0] << endl;
+    //cout << derE[0][0] << endl;
 }
 
 void Reseau::apprend(Echantillon E, double eps){
@@ -209,3 +218,14 @@ void Reseau::apprend(Echantillon E, double eps){
     }
 }
 
+void Reseau::affiche() {
+    for (int L=0; L<q; L++) {
+        cout << "--- Couche " << L << endl;
+        for (int i=0; i<nLmax; i++) {
+            for (int j=0; j<nLmax; j++) {
+                cout << p[L][i].w[j] << " | ";
+            }
+            cout << "th : " << p[L][i].theta << endl;
+        }
+    }
+}
