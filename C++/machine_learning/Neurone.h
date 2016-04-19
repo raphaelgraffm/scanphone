@@ -3,6 +3,8 @@
 #include <cmath>
 #include<iostream>
 using namespace std;
+#include<Imagine/Graphics.h>
+using namespace Imagine;
 
 class Perceptron {
 public:
@@ -22,10 +24,11 @@ public:
 
 class Echantillon {
     int p; //Taille de l'echantillon
-    int n; //Taille d'un exemple (i.e. une entree)
+
     int k; //Taille d'une sortie
     double** el; //Tableau des entrees
     double** v; //Tableau des sorties
+    int n; //Taille d'un exemple (i.e. une entree)
 public:
     Echantillon(int p0, int n0, int k0);
     ~Echantillon();
@@ -48,13 +51,15 @@ class Reseau{
     double** derE; //Tableau des dE/dyj
 public:
     Perceptron** p; //Tableau des perceptrons
-    Reseau(int q0, int nL[]);
+    Reseau();
+    void set(int q0, int nL[]); // à utiliser après initialisation de R
     ~Reseau();
     void calculeZ(double I[]); //met a jour tous les z apres une entree I
     double* retourSortie(); //renvoie la sortie stockee par le reseau
     void majP(double T[], double eps); //met a jour les perceptrons
     void apprend(Echantillon E, double eps); //algorithme d'apprentissage
     void affiche();
+    void ecritureFichier(ofstream& fileNet);
 };
 
 
