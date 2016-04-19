@@ -1,9 +1,4 @@
 #include "Neurone.h"
-#include <iostream>
-using namespace std;
-#include <cassert>
-#include<Imagine/Graphics.h>
-using namespace Imagine;
 
 double sigmaR(double x){
     double R = 0.;
@@ -136,8 +131,12 @@ double Echantillon::O(int i, Perceptron P){
 }
 
 //RESEAU
+Reseau::Reseau() {
+    q=0;
+}
 
-Reseau::Reseau(int q0, int nL[]){
+
+void Reseau::set(int q0, int nL[]){
     // en supposant nL de taille au moins q+1 (en comptant l'entrée)
     q = q0; // nombre de couches
 
@@ -166,17 +165,17 @@ Reseau::Reseau(int q0, int nL[]){
     for (int L=0; L<q; L++)
         for (int i=0; i<nLmax[L+1]; i++) {
             for (int j=0; j<nLmax[L]; j++){
-                p[L][i].w[j] = 0;
-                p[L][i].w[j] = double(rand()%1000000)/1000000;
+                //p[L][i].w[j] = 0.0001;
+                p[L][i].w[j] = double(rand()%100000)/1000000000;
             }
-            p[L][i].theta = double(rand()%1000000)/1000000;
+            p[L][i].theta = double(rand()%100000)/1000000000;
         }
 }
 
 Reseau::~Reseau(){
     delete[] nLmax;
 
-    for(int L=0;L<q;L++) {
+    /*for(int L=0;L<q;L++) {
         delete[] p[L];
         delete[] z[L];
         delete[] derE[L];
@@ -184,12 +183,13 @@ Reseau::~Reseau(){
     delete[] z[q];
     delete[] p;
     delete[] z;
-    delete[] derE;
+    delete[] derE;*/
 }
 
 void Reseau::calculeZ(double I[]){
-    for (int i=0; i<nLmax[0]; i++)
+    for (int i=0; i<nLmax[0]; i++) {
         z[0][i] = I[i];
+    }
     for (int L=1; L<=q; L++)
         for (int i=0; i<nLmax[L]; i++){
             z[L][i] = sigmaR(p[L-1][i].Adaline(z[L-1]));
@@ -235,8 +235,10 @@ void Reseau::majP(double T[], double eps){
 void Reseau::apprend(Echantillon E, double eps){
     for (int i=0; i<E.size(); i++){
         calculeZ(E.getEl(i));
-        //cout << "E.getEl = " << (E.getEl(i))[0] << " , " << (E.getEl(i))[1] << " -> " << (E.tabT(i))[0] << " | Résultat réseau : " << z[q][0] << endl;
+        //cout << "Résultat réseau : " << z[q][0] << " or il faut " << (E.tabT(i))[0];
         majP(E.tabT(i),eps);
+        calculeZ(E.getEl(i));
+        //cout << ", après correction : " << z[q][0] << endl;
     }
 }
 
@@ -248,6 +250,27 @@ void Reseau::affiche() {
                 cout << p[L][i].w[j] << " | ";
             }
             cout << "th : " << p[L][i].theta << endl;
+        }
+    }
+}
+
+
+void Reseau::ecritureFichier(ofstream& fileNet) {
+    // Fonction affiche modifiée pour écrire dans un fichier
+
+    // Écriture des paramètres du réseau
+    for (int L=0; L<q; L++) {
+        fileNet << nLmax[L] << " ";
+    }
+    fileNet << nLmax[q] << endl;
+
+    // Écriture de tous les poids des perceptron
+    for (int L=0; L<q; L++) {
+        for (int i=0; i<nLmax[L+1]; i++) {
+            for (int j=0; j<nLmax[L]; j++) {
+                fileNet << p[L][i].w[j] << " ";
+            }
+            fileNet << p[L][i].theta << endl;
         }
     }
 }
